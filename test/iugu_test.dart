@@ -1,13 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:iugu/iugu.dart';
+import '../lib/iugu.dart';
+import '../lib/models.dart';
 
 void main() {
-  test('adds one to input values', () {
-    final calculator = Calculator();
-    expect(calculator.addOne(2), 3);
-    expect(calculator.addOne(-7), -6);
-    expect(calculator.addOne(0), 1);
-    expect(() => calculator.addOne(null), throwsNoSuchMethodError);
+  test("should hit on server", () async {
+    Token token = new Token(accountId: "ENTER WITH YOUR ACCOUNT ID", 
+      creditCard: CreditCard(number: "4111111111111111", verificationValue: 472, firstName: "Vinicius", lastName: "Picanco", 
+                     month: 07, year: 2021)
+    );
+
+    Iugu iugu = new Iugu();
+    await iugu.createPaymentToken(token);
   });
 }
