@@ -10,6 +10,9 @@ import 'models.dart';
 class Iugu {
   String get url => "https://api.iugu.com";
   String get version => "v1";
+  final String auth;
+
+  Iugu({ String apiToken }) : auth = "Basic " + base64.encode(latin1.encode('$apiToken:')).trim();
 
   Future<IuguToken> createPaymentIuguToken(IuguToken token) async {
     IuguToken resultIuguToken;
@@ -23,9 +26,10 @@ class Iugu {
     }
 
     final response = await http.post(url + "/" + version + "/" + action, body: json.encode(token.toJson()));
-
+    
     if(response.statusCode == 200) {
       resultIuguToken = IuguToken.fromJson(json.decode(response.body));
+      resultIuguToken.creditCard.id = resultIuguToken.id;    
     } else {
       throw "Ocorreu um erro durante a comunicação com o servidor: " + response.body;
     }
@@ -45,21 +49,21 @@ class Iugu {
     }
 
     final fullURL = url + "/" + version + "/" + action;
-
-    final response = await http.post(fullURL, body: json.encode(client.toJson()));
+    final response = await http.post(fullURL, body: json.encode(client.toJson()),headers: { "Authorization": auth, "Content-type": "application/json" });
+    String body = response.body;
 
     if(response.statusCode == 200) {
-      resultClient = IuguClient.fromJson(json.decode(response.body));
-    } else {
-      throw "Ocorreu um erro durante a comunicação com o servidor: " + response.body;
+      resultClient = IuguClient.fromJson(json.decode(body));
+    } else {      
+      throw "Ocorreu um erro durante a comunicação com o servidor: " + body;
     }
 
     return resultClient;
      
   }
 
-  Future<IuguToken> createPaymentMethod(String customerId, String description, String token, { bool setAsDefault = false }) async {
-    IuguToken resultIuguToken;
+  Future<IuguPaymentMethod> createPaymentMethod(String customerId, String  token, String description, { bool setAsDefault = false }) async {
+    IuguPaymentMethod resultIuguToken;
     String action = "payment_methods";
 
     if(!IuguUtils.validateAccountID(customerId)) {
@@ -74,12 +78,13 @@ class Iugu {
 
     final fullURL = url + "/" + version + "/customers/" + customerId + "/" + action;
 
-    final response = await http.post(fullURL, body: paymentMethod);
+    final response = await http.post(fullURL, body: json.encode(paymentMethod), headers: { "Authorization": auth, "Content-type": "application/json" });
+    String body = response.body;
 
     if(response.statusCode == 200) {
-      resultIuguToken = IuguToken.fromJson(json.decode(response.body));
+      resultIuguToken = IuguPaymentMethod.fromJson(json.decode(body));
     } else {
-      throw "Ocorreu um erro durante a comunicação com o servidor: " + response.body;
+      throw "Ocorreu um erro durante a comunicação com o servidor: " + body;
     }
     
     return resultIuguToken;

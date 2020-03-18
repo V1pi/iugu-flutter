@@ -5,8 +5,6 @@ class IuguToken {
     String id;
     String accountId;
     String method = "credit_card";
-    String description;
-    String itemType;
     bool test;
     IuguCreditCard creditCard;
 
@@ -17,9 +15,7 @@ class IuguToken {
         this.test = true,
         @required
         this.creditCard,
-        this.method,
-        this.itemType,
-        this.description
+        this.method
     });
 
     factory IuguToken.fromJson(Map<String, dynamic> json) => IuguToken(
@@ -27,26 +23,60 @@ class IuguToken {
         id: json["id"],
         test: json["test"],
         method: json["method"],
-        creditCard: IuguCreditCard.fromJson(json["extra_info"]),
-        itemType: json["item_type"],
-        description: json["description"]
+        creditCard: json["data"] == null ? IuguCreditCard.fromJson(json["extra_info"]) : IuguCreditCard.fromJson(json["data"])
     );
 
     Map<String, dynamic> toJson() => {
         "account_id": accountId,
         "method": method,
         "test": test,
-        "description": description,
         "id": id,
         "data": creditCard.toJson(),
     };
-  int get hashCode => id.hashCode^accountId.hashCode^description.hashCode^method.hashCode^itemType.hashCode^
+  int get hashCode => id.hashCode^accountId.hashCode^method.hashCode^
                       test.hashCode^creditCard.hashCode;
-  bool operator== (o) => o is IuguToken && o.id == id && o.accountId == accountId && o.description == description &&
-                        o.method == method && o.itemType == itemType && o.test == test && o.creditCard == creditCard;
+  bool operator== (o) => o is IuguToken && o.id == id && o.accountId == accountId &&
+                        o.method == method && o.test == test && o.creditCard == creditCard;
+}
+
+class IuguPaymentMethod {
+  String id;
+  String itemType;
+  String description;
+  IuguClient client;
+  IuguCreditCard creditCard;
+
+  IuguPaymentMethod({
+      this.id,
+      this.client,
+      this.creditCard,
+      this.itemType,
+      this.description,
+  });
+
+  factory IuguPaymentMethod.fromJson(Map<String, dynamic> json) => IuguPaymentMethod(
+      id: json["id"],
+      creditCard: IuguCreditCard.fromJson(json["data"]),
+      itemType: json["item_type"],
+      description: json["description"],
+      client: new IuguClient(id: json["customer_id"])
+  );
+
+    Map<String, dynamic> toJson() => {
+      "id": id,
+      "data": creditCard.toJson(),
+      "item_type": itemType,
+      "description": description,
+      "customer_id": client.id
+  };
+
+  int get hashCode => id.hashCode^itemType.hashCode^description.hashCode^client.hashCode^creditCard.hashCode;
+  bool operator== (o) => o is IuguPaymentMethod && o.id == id && o.itemType == itemType && o.description == description &&
+                        o.client == client && o.creditCard == creditCard;
 }
 
 class IuguCreditCard {
+    String id;
     String number;
     int verificationValue;
     String firstName;
@@ -59,6 +89,7 @@ class IuguCreditCard {
     String bin;
 
     IuguCreditCard({
+        this.id,
         @required
         this.number,
         @required
@@ -101,11 +132,11 @@ class IuguCreditCard {
 
     int get hashCode => number.hashCode^verificationValue.hashCode^firstName.hashCode^lastName.hashCode
                         ^month.hashCode^year.hashCode^brand.hashCode^holderName.hashCode^displayNumber.hashCode
-                        ^bin.hashCode;
+                        ^bin.hashCode^id.hashCode;
     bool operator== (o) => o is IuguCreditCard && o.number == number && o.verificationValue == verificationValue && 
                           o.firstName == firstName && o.lastName == lastName && o.month == month && o.year == year &&
                           o.brand == brand && o.holderName == holderName && o.displayNumber == displayNumber &&
-                          o.bin == bin;
+                          o.bin == bin && o.id == id;
 }
 
 
@@ -166,7 +197,7 @@ class IuguClient {
         state: json["state"],
         district: json["district"],
         complement: json["complement"],
-        customVariables: List<dynamic>.from(json["custom_variables"].map((x) => x)),
+        customVariables:  List<dynamic>.from(json["custom_variables"].map((x) => x)),
         createdAt: DateTime.parse(json["created_at"]),
         updatedAt: DateTime.parse(json["updated_at"]),
     );
@@ -187,9 +218,9 @@ class IuguClient {
         "state": state,
         "district": district,
         "complement": complement,
-        "custom_variables": List<dynamic>.from(customVariables.map((x) => x)),
-        "created_at": createdAt.toIso8601String(),
-        "updated_at": updatedAt.toIso8601String(),
+        "custom_variables": customVariables != null ? List<dynamic>.from(customVariables.map((x) => x)) : [],
+        "created_at": createdAt != null ? createdAt.toIso8601String() : null,
+        "updated_at": updatedAt != null ? updatedAt.toIso8601String() : null,
     };
 
     int get hashCode => id.hashCode^email.hashCode^name.hashCode^notes.hashCode^phone.hashCode
